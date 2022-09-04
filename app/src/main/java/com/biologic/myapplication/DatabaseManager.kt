@@ -6,10 +6,11 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class DatabaseManager(context: Context, name: String) : SQLiteOpenHelper(context, name, null, 1) {
+class DatabaseManager(context: Context, name: String?) : SQLiteOpenHelper(context, name, null, 1) {
 
     override fun onCreate(db: SQLiteDatabase?) {
-        val criarTabela = "CREATE TABLE tbl_login (id_login INT NOT NULL, login VARCHAR(20), password VARCHAR(20), PRIMARY KEY (id_login));"
+        val criarTabela =
+            "CREATE TABLE tbl_login (id_login INT NOT NULL, login VARCHAR(20), password VARCHAR(20), PRIMARY KEY (id_login));"
         db!!.execSQL(criarTabela)
     }
 
@@ -29,7 +30,7 @@ class DatabaseManager(context: Context, name: String) : SQLiteOpenHelper(context
         db.insert("tbl_login", "id_login", cv)
     }
 
-    fun getUsers() : Cursor {
+    fun getUsers(): Cursor {
         var db = this.readableDatabase
         var cur = db.rawQuery("SELECT login, password FROM tbl_login", null)
 
