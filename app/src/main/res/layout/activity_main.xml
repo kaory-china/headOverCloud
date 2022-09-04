@@ -8,16 +8,19 @@
     android:gravity="center"
     tools:context=".MainActivity">
 
-    <ImageView
-        android:id="@+id/logo"
+    <TextView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:text="FIAP CLOUD"
+        android:textSize="50dp"
+        android:layout_marginTop="0dp"/>
 
     <EditText
         android:id="@+id/login"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Digite seu e-mail"
+        android:layout_marginTop="30dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"/>
 
@@ -30,46 +33,31 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"/>
 
-    <Button
-        android:id="@+id/button"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Entrar"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:backgroundTint="@color/teal_200"/>
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"/>
+        <Button
+            android:id="@+id/button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Entrar"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="5dp"
+            android:backgroundTint="@color/teal_200"/>
 
-    <EditText
-        android:id="@+id/newLogin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Digite seu e-mail"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"/>
+        <Button
+            android:id="@+id/cadastrar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="REGISTRE-SE"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="@color/teal_200"/>
 
-    <EditText
-        android:id="@+id/newPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Digite seu senha"
-        android:inputType="textPassword"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"/>
-
-    <Button
-        android:id="@+id/buttonCadastrar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Registre-se"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:backgroundTint="@color/teal_200"/>
+    </LinearLayout>
 
 </LinearLayout>
