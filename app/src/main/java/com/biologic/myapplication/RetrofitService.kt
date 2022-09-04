@@ -1,12 +1,12 @@
 package com.biologic.myapplication
 
+import retrofit2.Call
 import retrofit2.http.GET
-import retrofit2.http.POST
 
 interface RetrofitService {
 
     @GET("/pulp/api/v3/status/")
-    fun getStatus()
+    fun getPulpStatus() : Call<PulpResponse>
 
     // atrala artifact com content, publication
 
