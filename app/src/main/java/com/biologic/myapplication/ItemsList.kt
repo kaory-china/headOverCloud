@@ -1,8 +1,11 @@
 package com.biologic.myapplication
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.ListView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +18,19 @@ class ItemsList : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_items_list)
 
+        val perfilButton: Button = findViewById(R.id.perfil)
+        perfilButton.setOnClickListener(View.OnClickListener {
+            val i = Intent(this, Perfil::class.java)
+            startActivity(i)
+            getFiles()
+        })
+
+        val uploadButton: Button = findViewById(R.id.addFile)
+        uploadButton.setOnClickListener(View.OnClickListener {
+            val i = Intent(this, Upload::class.java)
+            startActivity(i)
+        })
+
         // INICIO TESTE
         val arrayAdapter: ArrayAdapter<*>
         val users = arrayOf(
@@ -24,8 +40,10 @@ class ItemsList : AppCompatActivity() {
 
         // access the listView from xml file
         var mListView = findViewById<ListView>(R.id.filesList)
-        arrayAdapter = ArrayAdapter(this,
-            android.R.layout.simple_list_item_1, users)
+        arrayAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1, users
+        )
         mListView.adapter = arrayAdapter
 
         // FIM TESTE
@@ -37,10 +55,9 @@ class ItemsList : AppCompatActivity() {
         call.enqueue(object : Callback<PulpResponse> {
             override fun onResponse(call: Call<PulpResponse>, response: Response<PulpResponse>) {
                 response.body()?.let {
-                    Log.i("CEP", it.toString())
-                    Toast.makeText(this@ItemsList, it.toString(), Toast.LENGTH_LONG).show()
-                } ?: Toast.makeText(this@ItemsList, "CEP Não Localizado", Toast.LENGTH_LONG)
-                    .show()
+                    Log.i("PulpResponse", it.toString())
+
+                }
             }
 
             override fun onFailure(call: Call<PulpResponse>, t: Throwable) {

@@ -7,12 +7,31 @@
     android:orientation="vertical"
     tools:context=".ItemsList">
 
-    <TextView
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Meus Arquivos"
-        android:textSize="35dp"
-        android:textAlignment="center"/>
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/perfil"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".15"
+            android:textSize="25dp"
+            android:text="|"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:gravity=""/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Meus Arquivos"
+            android:textSize="35dp"
+            android:layout_weight=".85"
+            android:layout_marginEnd="16dp"/>
+
+    </LinearLayout>
 
     <ListView
         android:id="@+id/filesList"
