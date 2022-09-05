@@ -19,8 +19,6 @@ class Upload : AppCompatActivity() {
                 .setAction(Intent.ACTION_GET_CONTENT)
 
             startActivityForResult(Intent.createChooser(intent, "Select a file"), 111)
-
-
         })
     }
 

@@ -4,19 +4,31 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.ListView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class ItemsList : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_items_list)
+
+        var layoutManager: RecyclerView.LayoutManager? = null
+        var adapter: RecyclerView.Adapter<RecyclerAdapter.ViewHolder>? = null
+        var recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+
+        layoutManager = LinearLayoutManager(this)
+        recyclerView.layoutManager = layoutManager
+
+        adapter = RecyclerAdapter()
+        recyclerView.adapter = adapter
 
         val perfilButton: Button = findViewById(R.id.perfil)
         perfilButton.setOnClickListener(View.OnClickListener {
@@ -31,22 +43,6 @@ class ItemsList : AppCompatActivity() {
             startActivity(i)
         })
 
-        // INICIO TESTE
-        val arrayAdapter: ArrayAdapter<*>
-        val users = arrayOf(
-            "Virat Kohli", "Rohit Sharma", "Steve Smith",
-            "Kane Williamson", "Ross Taylor", "Virat Kohli"
-        )
-
-        // access the listView from xml file
-        var mListView = findViewById<ListView>(R.id.filesList)
-        arrayAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_list_item_1, users
-        )
-        mListView.adapter = arrayAdapter
-
-        // FIM TESTE
     }
 
     fun getFiles() {

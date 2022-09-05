@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,44 +7,46 @@
     tools:context=".ItemsList">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:id="@+id/child"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/perfil"
+            android:layout_weight=".2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight=".15"
-            android:textSize="25dp"
-            android:text="|"
+            android:text="P"
+            android:textSize="30dp"
             android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:gravity=""/>
+            android:layout_marginEnd="20dp"/>
 
         <TextView
+            android:id="@+id/files"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Meus Arquivos"
-            android:textSize="35dp"
-            android:layout_weight=".85"
-            android:layout_marginEnd="16dp"/>
+            android:textSize="30dp"
+            android:layout_weight=".9"
+            android:layout_marginEnd="16dp"
+            android:gravity="start"/>
 
     </LinearLayout>
 
-    <ListView
-        android:id="@+id/filesList"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"/>
 
     <Button
         android:id="@+id/addFile"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="+"
+        android:text="ADD FILE"
         android:textSize="30dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_alignParentBottom="true"
+        />
 
-</LinearLayout>
+</RelativeLayout>
