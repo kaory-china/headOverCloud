@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.biologic.myapplication.domain.*
@@ -44,7 +45,6 @@ class Upload : AppCompatActivity() {
         null,
         null
     )
-    var pulpFileRepository: Response<PulpFileRepository>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +52,9 @@ class Upload : AppCompatActivity() {
 
         var path: TextView = findViewById(R.id.path)
         var fileName: EditText = findViewById(R.id.nome_arquivo)
+        val progressBar: ProgressBar = findViewById(R.id.progress_bar)
+        progressBar.visibility = View.INVISIBLE
+
 
         val browse: Button = findViewById(R.id.browse)
         browse.setOnClickListener(View.OnClickListener {
@@ -66,9 +69,17 @@ class Upload : AppCompatActivity() {
         })
 
         val upload: Button = findViewById(R.id.salvar)
+
+
         upload.setOnClickListener(View.OnClickListener {
+            progressBar.visibility = View.VISIBLE
             uploadFile(path.text.toString(), fileName.editableText.toString())
+            progressBar.visibility = View.INVISIBLE
+
+            val i = Intent(this, ItemsList::class.java)
+            startActivity(i)
         })
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -82,7 +93,6 @@ class Upload : AppCompatActivity() {
 
     // upload file to Pulp
     private fun uploadFile(path: String, fileName: String) {
-
         // [TODO]: This should be captured by the upload file button
         //val uploadFileTest = File(path, fileName)
         val uploadFileTest = File("/storage/emulated/0/Download/", fileName)
@@ -117,12 +127,12 @@ class Upload : AppCompatActivity() {
             var reposResponse = service.getRepos("test").body()!!.results
             println("Response from getRepos: " + reposResponse)
             if (reposResponse!!.isEmpty()) {
-                pulpFileRepository = service.createFileRepository(newRepo)
-                println("Response body from createFileRepository: " + pulpFileRepository!!.body())
+                reposResponse.add(service.createFileRepository(newRepo).body()!!)
+                println("Response body from createFileRepository: " + reposResponse)
             }
             reposResponse = service.getRepos("test").body()!!.results
             var uri = URI(reposResponse!![0].latest_version_href)
-            var latestVersion = "versions/" + uri.path.substring(uri.path.lastIndexOf('/') - 1 )
+            var latestVersion = "versions/" + uri.path.substring(uri.path.lastIndexOf('/') - 1)
             println("LATEST VERSION = $latestVersion")
 
             // get file content created
@@ -144,25 +154,25 @@ class Upload : AppCompatActivity() {
             val modifyContent = ModifyContent(
                 arrayListOf(fileContentList.results!![0].pulp_href!!),
                 ArrayList<String>(),
-                pulpFileRepository!!.body()!!.pulp_href + latestVersion
+                reposResponse!![0].pulp_href + latestVersion
             )
             var task =
-                service.addContentToRepo(pulpFileRepository!!.body()!!.pulp_href!!, modifyContent)
+                service.addContentToRepo(reposResponse!![0].pulp_href!!, modifyContent)
             println("Response from addContentToRepo: " + task)
 
 
             sleep(10000)
-            println("PULP REPO FOUND: " + pulpFileRepository!!.body()!!.pulp_href + latestVersion)
+            println("PULP REPO FOUND: " + reposResponse!![0].pulp_href + latestVersion)
             // [TODO] in a re-execution the repository will not be recreated,
             //        so pulpFileRepository var will be null ... we need to handle this scenario
             // creating publication to a repository
 
             reposResponse = service.getRepos("test").body()!!.results
             uri = URI(reposResponse!![0].latest_version_href)
-            latestVersion = "versions/" + uri.path.substring(uri.path.lastIndexOf('/') - 1 )
+            latestVersion = "versions/" + uri.path.substring(uri.path.lastIndexOf('/') - 1)
             println("LATEST VERSION = $latestVersion")
             val publicationCreateResponse = CreatePublication(
-                pulpFileRepository!!.body()!!.pulp_href+latestVersion
+                reposResponse!![0].pulp_href + latestVersion
             )
             task = service.createPublication(publicationCreateResponse)
             println("Response from createPublication: " + task)
@@ -177,7 +187,7 @@ class Upload : AppCompatActivity() {
                 var publications = service.getPublications()
                 println("Response from getPublications: " + publications)
                 for (i in publications.body()!!.results!!) {
-                    if (i.repository_version == pulpFileRepository!!.body()!!.pulp_href + latestVersion) {
+                    if (i.repository_version == reposResponse!![0]!!.pulp_href + latestVersion) {
                         publication = i
                         println("Publication found! : " + publication)
                         break@loop
@@ -200,12 +210,17 @@ class Upload : AppCompatActivity() {
                 task = service.createDistribution(distributionCreateResponse)
                 println("Response from createDistribution: " + task)
             } else {
-                var updateDistribution = UpdateDistribution("fiap", null, "new_dist", publication.pulp_href!!)
-                task = service.updateDistribution(distributionList.results!![0].pulp_href, updateDistribution)
+                var updateDistribution =
+                    UpdateDistribution("fiap", null, "new_dist", publication.pulp_href!!)
+                task = service.updateDistribution(
+                    distributionList.results!![0].pulp_href,
+                    updateDistribution
+                )
                 println("Response from updateDistribution: $task")
             }
 
         }
         runBlocking { job.join() }
+
     }
 }
