@@ -186,7 +186,7 @@ class Upload : AppCompatActivity() {
                 sleep(1000)
             }
 
-            val distributionList = service.getDistribution("test").body()!!
+            val distributionList = service.getDistribution("new_dist").body()!!
             if (distributionList.count == 0) {
                 // create a new distribution with the publication found
                 var distributionCreateResponse = CreateDistribution(
@@ -200,7 +200,7 @@ class Upload : AppCompatActivity() {
                 task = service.createDistribution(distributionCreateResponse)
                 println("Response from createDistribution: " + task)
             } else {
-                var updateDistribution = UpdateDistribution("new_dist", null, publication.pulp_href!!, null)
+                var updateDistribution = UpdateDistribution("fiap", null, "new_dist", publication.pulp_href!!)
                 task = service.updateDistribution(distributionList.results!![0].pulp_href, updateDistribution)
                 println("Response from updateDistribution: $task")
             }

@@ -98,7 +98,6 @@ interface RetrofitService {
     suspend fun getDistribution(@Query("name") name: String? = null): Response<DistributionList>
 
     // Update distribution
-    @FormUrlEncoded
     @Headers("Content-Type: application/json")
     @PATCH("{pulp_href_distribution}")
     suspend fun updateDistribution(@Path("pulp_href_distribution", encoded = true) distribution: String,
