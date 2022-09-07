@@ -71,6 +71,9 @@ interface RetrofitService {
         @Path("pulp_href_repository", encoded = true) repo: String,
     ): Response<ArrayList<RepoVersion>>
 
+    @GET("/pulp/api/v3/repositories/file/file/")
+    suspend fun getRepos(@Query("name") name: String): Response<PulpFileRepository>
+
     // Create publication
     // "Either the createPublication.repository or createPublication.repository_version
     // need to be specified but not both."
@@ -89,6 +92,17 @@ interface RetrofitService {
     @POST("/pulp/api/v3/distributions/file/file/")
     suspend fun createDistribution(
         @Body createDistribution: CreateDistribution
+    ): Response<Object>
+
+    @GET("/pulp/api/v3/distributions/file/file/")
+    suspend fun getDistribution(@Query("name") name: String? = null): Response<DistributionList>
+
+    // Update distribution
+    @FormUrlEncoded
+    @Headers("Content-Type: application/json")
+    @PATCH("{pulp_href_distribution}")
+    suspend fun updateDistribution(@Path("pulp_href_distribution", encoded = true) distribution: String,
+        @Body updateDistribution: UpdateDistribution
     ): Response<Object>
 
 

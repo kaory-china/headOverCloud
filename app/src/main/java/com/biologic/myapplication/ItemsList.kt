@@ -32,6 +32,8 @@ class ItemsList : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_items_list)
 
+        getDistribution()
+
         var contentList = getFileContents()
 
         var layoutManager: RecyclerView.LayoutManager?
@@ -56,6 +58,24 @@ class ItemsList : AppCompatActivity() {
             startActivity(i)
         })
 
+    }
+
+    // getFileContents returns the list of pulp content files
+    fun getDistribution(): ArrayList<PulpContent> {
+        val service: RetrofitService = RetrofitFactory().retrofitService()
+        var contentList = ArrayList<PulpContent>()
+
+        // we are assigning the output from launch so that we can block
+        // the thread execution until we get the response from request
+        var job = CoroutineScope(Dispatchers.IO).launch {
+            val response = service.getFileContent()
+            contentList = response.body()?.results!!
+            Log.i("Response body from getFileContents:", response.body().toString())
+        }
+
+        // block thread until we get the response from getFileContents
+        runBlocking { job.join() }
+        return contentList
     }
 
     // getFileContents returns the list of pulp content files

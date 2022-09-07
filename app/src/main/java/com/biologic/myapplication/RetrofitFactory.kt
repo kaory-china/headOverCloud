@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class RetrofitFactory {
 
-    val URL: String = "http://172.19.249.255:8080"
+    val URL: String = "http://172.26.236.192:8080"
 
     val client = OkHttpClient.Builder()
         .addInterceptor(PulpAuth("admin", "password"))

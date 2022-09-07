@@ -22,10 +22,29 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
+import java.lang.Thread.*
+import java.net.URI
+import java.util.Objects.isNull
 
 class Upload : AppCompatActivity() {
 
     val service: RetrofitService = RetrofitFactory().retrofitService()
+
+    val newRepo = PulpFileRepository(
+        "test",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    )
+    var pulpFileRepository: Response<PulpFileRepository>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +76,7 @@ class Upload : AppCompatActivity() {
 
         val path: TextView = findViewById(R.id.path)
         if (requestCode == 111 && resultCode == RESULT_OK) {
-            path.text = data?.data.toString()
+            path.text = data?.data?.toString()
         }
     }
 
@@ -65,20 +84,23 @@ class Upload : AppCompatActivity() {
     private fun uploadFile(path: String, fileName: String) {
 
         // [TODO]: This should be captured by the upload file button
-        val uploadFileTest = File(path, fileName)
+        //val uploadFileTest = File(path, fileName)
+        val uploadFileTest = File("/storage/emulated/0/Download/", fileName)
 
-        var body: RequestBody = RequestBody.create(null, path)
-        val multipartBody = MultipartBody.Part.createFormData(fileName, fileName, body)
+        var body: RequestBody = RequestBody.create(null, uploadFileTest)
+        val multipartBody = MultipartBody.Part.createFormData("file", fileName, body)
 
         var job = CoroutineScope(Dispatchers.IO).launch {
 
-            println(multipartBody)
-            println(fileName+" .....  "+path)
+            println("MultipartBody: " + multipartBody)
+            println("fileName: " + fileName)
+            println("path: " + path)
+
             // [TODO] we should check if the artifact already exists
             // create pulp artifact
             val uploadFileResponse = service.uploadFile(multipartBody)
-            println(uploadFileResponse)
-            println("Response body from artifact: " + uploadFileResponse.body())
+            println("Response from artifact: " + uploadFileResponse)
+            println("Response BODY from artifact: " + uploadFileResponse.body())
 
             // [TODO] we should check if the artifact failed to be created
             // [TODO] we should check if the content already exists
@@ -90,91 +112,100 @@ class Upload : AppCompatActivity() {
             // [TODO] this should run only a single time for the
             //        entire app life!
             // create a new pulp repo
-            val newRepo = PulpFileRepository(
-                "test",
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-            )
-            val pulpFileRepository = service.createFileRepository(newRepo)
-            println("Response body from createFileRepository: " + pulpFileRepository.body())
+
+
+            var reposResponse = service.getRepos("test").body()!!.results
+            println("Response from getRepos: " + reposResponse)
+            if (reposResponse!!.isEmpty()) {
+                pulpFileRepository = service.createFileRepository(newRepo)
+                println("Response body from createFileRepository: " + pulpFileRepository!!.body())
+            }
+            reposResponse = service.getRepos("test").body()!!.results
+            var uri = URI(reposResponse!![0].latest_version_href)
+            var latestVersion = "versions/" + uri.path.substring(uri.path.lastIndexOf('/') - 1 )
+            println("LATEST VERSION = $latestVersion")
 
             // get file content created
             // pulp api does not return this information on create request
-            var fileContentList: PulpContentList = PulpContentList(0, null, null, null)
+            var fileContentList = PulpContentList(0, null, null, null)
             for (i in 1..10) {
                 val responseGetFileContent = service.getFileContent(fileName)
                 if (responseGetFileContent.body()!!.count!! > 0) {
                     fileContentList = responseGetFileContent.body()!!
                     break
                 }
-                Thread.sleep(1000)
+                sleep(1000)
             }
             println("Response body from getFileContent: " + fileContentList)
 
             // [TODO] in a re-execution the repository will not be recreated,
             //        so pulpFileRepository var will be null ... we need to handle this scenario
             // adding file content into a repository
-            val modifyContent: ModifyContent = ModifyContent(
+            val modifyContent = ModifyContent(
                 arrayListOf(fileContentList.results!![0].pulp_href!!),
                 ArrayList<String>(),
-                pulpFileRepository.body()!!.pulp_href + "versions/0/"
+                pulpFileRepository!!.body()!!.pulp_href + latestVersion
             )
             var task =
-                service.addContentToRepo(pulpFileRepository.body()!!.pulp_href!!, modifyContent)
+                service.addContentToRepo(pulpFileRepository!!.body()!!.pulp_href!!, modifyContent)
             println("Response from addContentToRepo: " + task)
 
+
+            sleep(10000)
+            println("PULP REPO FOUND: " + pulpFileRepository!!.body()!!.pulp_href + latestVersion)
             // [TODO] in a re-execution the repository will not be recreated,
             //        so pulpFileRepository var will be null ... we need to handle this scenario
             // creating publication to a repository
+
+            reposResponse = service.getRepos("test").body()!!.results
+            uri = URI(reposResponse!![0].latest_version_href)
+            latestVersion = "versions/" + uri.path.substring(uri.path.lastIndexOf('/') - 1 )
+            println("LATEST VERSION = $latestVersion")
             val publicationCreateResponse = CreatePublication(
-                null,
-                pulpFileRepository.body()!!.pulp_href,
-                fileName
+                pulpFileRepository!!.body()!!.pulp_href+latestVersion
             )
             task = service.createPublication(publicationCreateResponse)
             println("Response from createPublication: " + task)
 
-            var publication: Publication = Publication(null, null, null, null, null, null)
+            var publication = Publication(null, null, null, null, null, null)
 
             // wait until publication is available in pulp
             // (it takes some time for it to get created)
             // and when it is found assign it to "publication" var
+            // retry checks
             loop@ for (i in 0..10) {
                 var publications = service.getPublications()
                 println("Response from getPublications: " + publications)
                 for (i in publications.body()!!.results!!) {
-                    if (i.manifest == fileName) {
+                    if (i.repository_version == pulpFileRepository!!.body()!!.pulp_href + latestVersion) {
                         publication = i
                         println("Publication found! : " + publication)
                         break@loop
                     }
                 }
-                Thread.sleep(1000)
+                sleep(1000)
             }
 
-// create a new distribution with the publication found
-            var distributionCreateResponse = CreateDistribution(
-                "fiap",
-                null,
-                null,
-                "new_dist",
-                null,
-                publication.pulp_href,
-            )
-            task = service.createDistribution(distributionCreateResponse)
-            println("Response from createDistribution: " + task)
+            val distributionList = service.getDistribution("test").body()!!
+            if (distributionList.count == 0) {
+                // create a new distribution with the publication found
+                var distributionCreateResponse = CreateDistribution(
+                    "fiap",
+                    null,
+                    null,
+                    "new_dist",
+                    null,
+                    publication.pulp_href,
+                )
+                task = service.createDistribution(distributionCreateResponse)
+                println("Response from createDistribution: " + task)
+            } else {
+                var updateDistribution = UpdateDistribution("new_dist", null, publication.pulp_href!!, null)
+                task = service.updateDistribution(distributionList.results!![0].pulp_href, updateDistribution)
+                println("Response from updateDistribution: $task")
+            }
+
         }
         runBlocking { job.join() }
     }
-
-
 }

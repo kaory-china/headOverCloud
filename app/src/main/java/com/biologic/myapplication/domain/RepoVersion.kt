@@ -5,7 +5,7 @@ import java.util.*
 data class RepoVersion(
     val pulp_href: String,
     val pulp_created: String,
-    val number: Integer,
+    val number: Int,
     val base_version: String?,
     val content_summary: Objects,
 )
