@@ -1,19 +1,26 @@
 package com.biologic.myapplication
 
+import android.app.Activity
+import android.content.ContentResolver
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toFile
 import com.biologic.myapplication.domain.*
 import com.example.myfirstapp.CreateDistribution
 import com.example.myfirstapp.CreatePublication
 import com.example.myfirstapp.PulpResponse
 import kotlinx.coroutines.*
+import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody
@@ -23,6 +30,7 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
+import java.io.InputStream
 import java.lang.Thread.*
 import java.net.URI
 import java.util.Objects.isNull
@@ -45,6 +53,11 @@ class Upload : AppCompatActivity() {
         null,
         null
     )
+    val requestCode = 111
+    var uri: Uri? = null
+    var path: String? = null
+    var file: File? = null
+    var type: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,29 +65,23 @@ class Upload : AppCompatActivity() {
 
         var path: TextView = findViewById(R.id.path)
         var fileName: EditText = findViewById(R.id.nome_arquivo)
-        val progressBar: ProgressBar = findViewById(R.id.progress_bar)
-        progressBar.visibility = View.INVISIBLE
+        var progressBar: ProgressBar = findViewById(R.id.progress_bar)
+        progressBar.visibility = View.GONE
 
 
         val browse: Button = findViewById(R.id.browse)
         browse.setOnClickListener(View.OnClickListener {
-            val intent = Intent()
-                .setType("*/*")
-                .setAction(Intent.ACTION_GET_CONTENT)
-
-            path.text = startActivityForResult(
-                Intent.createChooser(intent, "Select a file"),
-                111
-            ).toString()
+            val intent = Intent().setType("*/*").setAction(Intent.ACTION_GET_CONTENT)
+            startActivityForResult(Intent.createChooser(intent, "msg"), requestCode)
         })
 
         val upload: Button = findViewById(R.id.salvar)
 
-
         upload.setOnClickListener(View.OnClickListener {
+            var progressBar: ProgressBar = findViewById(R.id.progress_bar)
+            progressBar.bringToFront()
             progressBar.visibility = View.VISIBLE
-            uploadFile(path.text.toString(), fileName.editableText.toString())
-            progressBar.visibility = View.INVISIBLE
+            uploadFile(path.text.toString(), fileName.editableText.toString(), uri!!)
 
             val i = Intent(this, ItemsList::class.java)
             startActivity(i)
@@ -84,21 +91,32 @@ class Upload : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
-        val path: TextView = findViewById(R.id.path)
-        if (requestCode == 111 && resultCode == RESULT_OK) {
-            path.text = data?.data?.toString()
+        if (requestCode == requestCode && resultCode == Activity.RESULT_OK) {
+            val directoryUri = data?.data ?: return
+            uri = data?.data
+            println("URI = " + uri)
+            type = data.type
+            println("type = " + type)
+            //file = directoryUri.toFile()
         }
     }
 
     // upload file to Pulp
-    private fun uploadFile(path: String, fileName: String) {
+    private fun uploadFile(path: String, fileName: String, uri: Uri) {
         // [TODO]: This should be captured by the upload file button
         //val uploadFileTest = File(path, fileName)
-        val uploadFileTest = File("/storage/emulated/0/Download/", fileName)
 
-        var body: RequestBody = RequestBody.create(null, uploadFileTest)
-        val multipartBody = MultipartBody.Part.createFormData("file", fileName, body)
+        val uploadFileTest = File("/storage/emulated/0/Download/", fileName)
+        val testeFile = Uri.fromFile(uploadFileTest).toFile()
+
+        //var body: RequestBody = RequestBody.create(null, file)
+        val contentPart = InputStreamRequestBody(null, applicationContext.contentResolver, uri)
+        val requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("", "file", contentPart)
+            .build()
+        println("REQUEST-BODY = " + requestBody)
+        val multipartBody = MultipartBody.Part.createFormData("file", fileName, contentPart)
 
         var job = CoroutineScope(Dispatchers.IO).launch {
 
@@ -220,7 +238,8 @@ class Upload : AppCompatActivity() {
             }
 
         }
-        runBlocking { job.join() }
+        runBlocking {
+            job.join() }
 
     }
 }

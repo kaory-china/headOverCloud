@@ -1,6 +1,5 @@
 package com.biologic.myapplication
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,15 +7,11 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.biologic.myapplication.domain.PulpContent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
-class RecyclerAdapter(private val contentList: ArrayList<PulpContent>): RecyclerView.Adapter<RecyclerAdapter.ViewHolder>() {
+class RecyclerAdapter(private val contentList: ArrayList<PulpContent>) :
+    RecyclerView.Adapter<RecyclerAdapter.ViewHolder>() {
 
-    //var contentList = arrayOf("chapter 1", "chapter 1","chapter 1","chapter 1")
-
-    val service: RetrofitService = RetrofitFactory().retrofitService()
+    private var clickListener: ClickListener<PulpContent>? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerAdapter.ViewHolder {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.card_layout, parent, false)
@@ -24,14 +19,19 @@ class RecyclerAdapter(private val contentList: ArrayList<PulpContent>): Recycler
     }
 
     override fun onBindViewHolder(holder: RecyclerAdapter.ViewHolder, position: Int) {
+        val content = contentList[0]
         holder.fileName.text = contentList[position].relative_path.toString()
+
+        holder.itemView.setOnClickListener {
+        clickListener!!.onClickListener(content)
+        }
     }
 
     override fun getItemCount(): Int {
         return contentList.size
     }
 
-    inner class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val fileName: TextView
         val button: Button
 
@@ -40,4 +40,12 @@ class RecyclerAdapter(private val contentList: ArrayList<PulpContent>): Recycler
             button = itemView.findViewById(R.id.delete_button)
         }
     }
+
+    fun setOnClickListener(clickListener: ClickListener<PulpContent>) {
+        this.clickListener = clickListener
+    }
+}
+
+interface ClickListener<T> {
+    fun onClickListener(data: T)
 }

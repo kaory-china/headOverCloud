@@ -1,38 +1,34 @@
 package com.biologic.myapplication
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.biologic.myapplication.domain.PulpArtifact
 import com.biologic.myapplication.domain.PulpContent
-import com.biologic.myapplication.domain.PulpContentList
-import com.biologic.myapplication.domain.PulpFileRepository
-import com.example.myfirstapp.PulpResponse
-import kotlinx.coroutines.*
-import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.io.FileInputStream
+import java.io.InputStream
+import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+
 
 class ItemsList : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_items_list)
-
-        getDistribution()
+        setContentView(R.layout.activity_list_item)
 
         var contentList = getFileContents()
 
@@ -58,24 +54,14 @@ class ItemsList : AppCompatActivity() {
             startActivity(i)
         })
 
-    }
+        adapter!!.setOnClickListener(object : ClickListener<PulpContent> {
+            @RequiresApi(Build.VERSION_CODES.O)
+            override fun onClickListener(content: PulpContent) {
+                Log.i("SOLICITANDO ARQUIVO DO CONTENT: ", content.toString())
+                getFile(content!!.relative_path!!, "teste.jpg")
+            }
+        })
 
-    // getFileContents returns the list of pulp content files
-    fun getDistribution(): ArrayList<PulpContent> {
-        val service: RetrofitService = RetrofitFactory().retrofitService()
-        var contentList = ArrayList<PulpContent>()
-
-        // we are assigning the output from launch so that we can block
-        // the thread execution until we get the response from request
-        var job = CoroutineScope(Dispatchers.IO).launch {
-            val response = service.getFileContent()
-            contentList = response.body()?.results!!
-            Log.i("Response body from getFileContents:", response.body().toString())
-        }
-
-        // block thread until we get the response from getFileContents
-        runBlocking { job.join() }
-        return contentList
     }
 
     // getFileContents returns the list of pulp content files
@@ -94,6 +80,25 @@ class ItemsList : AppCompatActivity() {
         // block thread until we get the response from getFileContents
         runBlocking { job.join() }
         return contentList
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun getFile(fileName: String, newFileName: String) {
+        val service = RetrofitFactory().retrofitService()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            Log.i("ENTRANDO COROUTINE GET-FILE", "")
+            val baseURL = service.getDistribution("new_dist").body()!!.results!![0].base_url
+            Log.i("baseURL = ", baseURL.toString())
+            val linkFile = baseURL + "images.jpeg"
+            Log.i("linkFile = ", linkFile)
+            var newFile = URL(linkFile).openStream()
+            Files.copy(newFile,
+                Paths.get("/storage/emulated/0/Download/test.jpeg"),
+                StandardCopyOption.REPLACE_EXISTING
+            );
+            // http://desktop-27dn7ed:8080/pulp/content/fiap/images.jpeg
+        }
     }
 
 }
