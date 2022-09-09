@@ -15,6 +15,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toFile
+import androidx.documentfile.provider.DocumentFile
 import com.biologic.myapplication.domain.*
 import com.example.myfirstapp.CreateDistribution
 import com.example.myfirstapp.CreatePublication
@@ -58,15 +59,13 @@ class Upload : AppCompatActivity() {
     var path: String? = null
     var file: File? = null
     var type: String? = null
+    var fileName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_upload)
 
         var path: TextView = findViewById(R.id.path)
-        var fileName: EditText = findViewById(R.id.nome_arquivo)
-        var progressBar: ProgressBar = findViewById(R.id.progress_bar)
-        progressBar.visibility = View.GONE
 
 
         val browse: Button = findViewById(R.id.browse)
@@ -78,10 +77,8 @@ class Upload : AppCompatActivity() {
         val upload: Button = findViewById(R.id.salvar)
 
         upload.setOnClickListener(View.OnClickListener {
-            var progressBar: ProgressBar = findViewById(R.id.progress_bar)
-            progressBar.bringToFront()
-            progressBar.visibility = View.VISIBLE
-            uploadFile(path.text.toString(), fileName.editableText.toString(), uri!!)
+
+            uploadFile(fileName!!, uri!!)
 
             val i = Intent(this, ItemsList::class.java)
             startActivity(i)
@@ -97,12 +94,14 @@ class Upload : AppCompatActivity() {
             println("URI = " + uri)
             type = data.type
             println("type = " + type)
+
+            fileName = DocumentFile.fromSingleUri(this,data!!.data!!)!!.name
             //file = directoryUri.toFile()
         }
     }
 
     // upload file to Pulp
-    private fun uploadFile(path: String, fileName: String, uri: Uri) {
+    private fun uploadFile(fileName: String, uri: Uri) {
         // [TODO]: This should be captured by the upload file button
         //val uploadFileTest = File(path, fileName)
 
@@ -120,6 +119,7 @@ class Upload : AppCompatActivity() {
 
         var job = CoroutineScope(Dispatchers.IO).launch {
 
+            println("ContentPart = : " + contentPart)
             println("MultipartBody: " + multipartBody)
             println("fileName: " + fileName)
             println("path: " + path)
