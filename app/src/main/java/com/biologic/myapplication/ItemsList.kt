@@ -105,9 +105,10 @@ class ItemsList : AppCompatActivity() {
                 println(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS))
                 var newFile = URL(path).openStream();
                 println("newFile = : $newFile")
-                var pathGet = Paths.get(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString() + "test.jpeg")
-                println()
+                var pathGet = Paths.get("storage/emulated/0/Download/$fileName")
+                println(pathGet)
                 Files.copy(newFile, pathGet, StandardCopyOption.REPLACE_EXISTING)
+                println("ARQUIVO BAIXADO")
             } catch (e: Exception) {
                 println(e)
             }

@@ -19,7 +19,7 @@ class RecyclerAdapter(private val contentList: ArrayList<PulpContent>) :
     }
 
     override fun onBindViewHolder(holder: RecyclerAdapter.ViewHolder, position: Int) {
-        val content = contentList[0]
+        val content = contentList[position]
         holder.fileName.text = contentList[position].relative_path.toString()
 
         holder.itemView.setOnClickListener {
