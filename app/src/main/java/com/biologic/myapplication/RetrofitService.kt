@@ -1,6 +1,7 @@
 package com.biologic.myapplication
 
 import com.biologic.myapplication.domain.*
+import com.example.myfirstapp.ArtifactList
 import com.example.myfirstapp.CreateDistribution
 import com.example.myfirstapp.CreatePublication
 import com.example.myfirstapp.PulpResponse
@@ -13,6 +14,11 @@ interface RetrofitService {
 
     @GET("/pulp/api/v3/status/")
     fun getPulpStatus(): Call<PulpResponse>
+
+    @GET("/pulp/api/v3/artifacts/")
+    suspend fun getArtifact(
+        @Query("sha256") sha256: String,
+    ): Response<ArtifactList>
 
     // Get a file repository
     //@GET("/pulp/api/v3/repositories/file/file/?name={fileName}")

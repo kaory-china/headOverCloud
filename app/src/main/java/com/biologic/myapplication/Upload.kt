@@ -34,7 +34,10 @@ import java.io.File
 import java.io.InputStream
 import java.lang.Thread.*
 import java.net.URI
+import java.security.MessageDigest
+import java.util.*
 import java.util.Objects.isNull
+import kotlin.collections.ArrayList
 
 class Upload : AppCompatActivity() {
 
@@ -117,25 +120,30 @@ class Upload : AppCompatActivity() {
         println("REQUEST-BODY = " + requestBody)
         val multipartBody = MultipartBody.Part.createFormData("file", fileName, contentPart)
 
+        // get sha256 from file
+        val md = MessageDigest.getInstance("SHA-256")
+        val input = uploadFileTest.readBytes()
+        val bytes = md.digest(input)
+        val sha256File = bytes.map { String.format("%02X", it) }.joinToString(separator = "")
+            .lowercase()
+
         var job = CoroutineScope(Dispatchers.IO).launch {
 
             println("ContentPart = : " + contentPart)
-            println("MultipartBody: " + multipartBody)
             println("fileName: " + fileName)
             println("path: " + path)
 
-            // [TODO] we should check if the artifact already exists
-            // create pulp artifact
-            val uploadFileResponse = service.uploadFile(multipartBody)
-            println("Response from artifact: " + uploadFileResponse)
-            println("Response BODY from artifact: " + uploadFileResponse.body())
+            val artifact = service.getArtifact(sha256File).body()!!
+            if (artifact.count == 0) {
+                val uploadFileResponse = service.uploadFile(multipartBody)
+                println(uploadFileResponse)
+                println("Response body from artifact: " + uploadFileResponse.body())
 
-            // [TODO] we should check if the artifact failed to be created
-            // [TODO] we should check if the content already exists
-            // create file content from artifact
-            val createContentResponse =
-                service.createContent(fileName, uploadFileResponse.body()!!.pulp_href!!)
-            println("Response body from createContent: " + createContentResponse.body())
+                val createContentResponse =
+                    service.createContent(fileName, uploadFileResponse.body()!!.pulp_href!!)
+                println("Response body from createContent: " + createContentResponse.body())
+            }
+
 
             // [TODO] this should run only a single time for the
             //        entire app life!

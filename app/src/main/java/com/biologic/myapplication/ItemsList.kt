@@ -3,23 +3,27 @@ package com.biologic.myapplication
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.biologic.myapplication.domain.PulpContent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import okhttp3.OkHttpClient
+import okio.Path.Companion.toPath
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
@@ -58,7 +62,7 @@ class ItemsList : AppCompatActivity() {
             @RequiresApi(Build.VERSION_CODES.O)
             override fun onClickListener(content: PulpContent) {
                 Log.i("SOLICITANDO ARQUIVO DO CONTENT: ", content.toString())
-                getFile(content!!.relative_path!!, "teste.jpg")
+                getFile(content.relative_path.toString())
             }
         })
 
@@ -83,22 +87,51 @@ class ItemsList : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun getFile(fileName: String, newFileName: String) {
+    private fun getFile(fileName: String) {
+        println("Downloading file: $fileName")
         val service = RetrofitFactory().retrofitService()
 
-        CoroutineScope(Dispatchers.IO).launch {
-            Log.i("ENTRANDO COROUTINE GET-FILE", "")
-            val baseURL = service.getDistribution("new_dist").body()!!.results!![0].base_url
-            Log.i("baseURL = ", baseURL.toString())
-            val linkFile = baseURL + "images.jpeg"
-            Log.i("linkFile = ", linkFile)
-            var newFile = URL(linkFile).openStream()
-            Files.copy(newFile,
-                Paths.get("/storage/emulated/0/Download/test.jpeg"),
-                StandardCopyOption.REPLACE_EXISTING
-            );
-            // http://desktop-27dn7ed:8080/pulp/content/fiap/images.jpeg
-        }
-    }
 
+
+        var linkFile: String? = null
+        val job = CoroutineScope(Dispatchers.IO).launch {
+            val distribution = service.getDistribution("new_dist").body()!!.results!![0].base_path
+            println("distribution = : $distribution")
+            val path = RetrofitFactory().URL + "/pulp/content/$distribution/$fileName"
+            println("path = : $path")
+
+            try {
+
+                println(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS))
+                var newFile = URL(path).openStream();
+                println("newFile = : $newFile")
+                var pathGet = Paths.get(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).toString() + "test.jpeg")
+                println()
+                Files.copy(newFile, pathGet, StandardCopyOption.REPLACE_EXISTING)
+            } catch (e: Exception) {
+                println(e)
+            }
+
+
+           ////////////////////////////
+/*            CoroutineScope(Dispatchers.IO).launch {
+                val dirRequest =
+                    registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+                        uri?.let {
+                            // call this to persist permission across decice reboots
+                            contentResolver.takePersistableUriPermission(uri,
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            // do your stuff
+                        }
+                    }
+                dirRequest.launch(null)
+            }*/
+            ////////////////////////////
+        }
+
+        runBlocking { job.join() }
+
+
+    }
 }
+
