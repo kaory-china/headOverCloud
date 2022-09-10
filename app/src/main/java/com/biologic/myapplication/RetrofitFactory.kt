@@ -1,15 +1,18 @@
 package com.biologic.myapplication
 
+import android.content.Context
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class RetrofitFactory {
+class RetrofitFactory(context: Context?) {
 
-    val URL: String = "http://172.22.11.40:8080"
+    val URL: String = context!!.getResources().getString(R.string.ip_address)
+    val user: String = context!!.getResources().getString(R.string.user)
+    val password: String = context!!.getResources().getString(R.string.password)
 
     val client = OkHttpClient.Builder()
-        .addInterceptor(PulpAuth("admin", "password"))
+        .addInterceptor(PulpAuth(user, password))
         .build()
 
     val retrofitFactory = Retrofit.Builder()

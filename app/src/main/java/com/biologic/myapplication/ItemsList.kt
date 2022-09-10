@@ -7,23 +7,17 @@ import android.os.Environment
 import android.util.Log
 import android.view.View
 import android.widget.Button
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.biologic.myapplication.domain.PulpContent
-import kotlinx.coroutines.*
-import okhttp3.OkHttpClient
-import okio.Path.Companion.toPath
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.io.File
-import java.io.FileInputStream
-import java.io.InputStream
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.net.URL
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
@@ -70,7 +64,7 @@ class ItemsList : AppCompatActivity() {
 
     // getFileContents returns the list of pulp content files
     fun getFileContents(): ArrayList<PulpContent> {
-        val service: RetrofitService = RetrofitFactory().retrofitService()
+        val service: RetrofitService = RetrofitFactory(this).retrofitService()
         var contentList = ArrayList<PulpContent>()
 
         // we are assigning the output from launch so that we can block
@@ -89,19 +83,16 @@ class ItemsList : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun getFile(fileName: String) {
         println("Downloading file: $fileName")
-        val service = RetrofitFactory().retrofitService()
+        val service = RetrofitFactory(this).retrofitService()
 
-
-
-        var linkFile: String? = null
         val job = CoroutineScope(Dispatchers.IO).launch {
             val distribution = service.getDistribution("new_dist").body()!!.results!![0].base_path
             println("distribution = : $distribution")
-            val path = RetrofitFactory().URL + "/pulp/content/$distribution/$fileName"
+            val path =
+                getResources().getString(R.string.ip_address) + "/pulp/content/$distribution/$fileName"
             println("path = : $path")
 
             try {
-
                 println(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS))
                 var newFile = URL(path).openStream();
                 println("newFile = : $newFile")
@@ -112,27 +103,8 @@ class ItemsList : AppCompatActivity() {
             } catch (e: Exception) {
                 println(e)
             }
-
-
-           ////////////////////////////
-/*            CoroutineScope(Dispatchers.IO).launch {
-                val dirRequest =
-                    registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-                        uri?.let {
-                            // call this to persist permission across decice reboots
-                            contentResolver.takePersistableUriPermission(uri,
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            // do your stuff
-                        }
-                    }
-                dirRequest.launch(null)
-            }*/
-            ////////////////////////////
         }
-
         runBlocking { job.join() }
-
-
     }
 }
 

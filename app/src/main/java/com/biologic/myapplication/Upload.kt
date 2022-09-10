@@ -41,7 +41,7 @@ import kotlin.collections.ArrayList
 
 class Upload : AppCompatActivity() {
 
-    val service: RetrofitService = RetrofitFactory().retrofitService()
+    val service: RetrofitService = RetrofitFactory(this).retrofitService()
 
     val newRepo = PulpFileRepository(
         "test",

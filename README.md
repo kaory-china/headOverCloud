@@ -62,9 +62,11 @@ git clone https://github.com/kaory-china/headOverCloud.git
 ```
 
 * abrir o repositório na IDE
-* alterar o arquivo RetrofitFactory.kt ([TODO] mudar essa configuração hardcoded)
+* alterar o arquivo string.xml e adicionar o endereço de ip e credencias configuradas para o pulp:
  ```
- val URL: String = "http://<ENDEREÇO ONDE PULP FOI INSTALADO>:8080"
+    <string name="ip_address">INSERIR IP</string>
+    <string name="user">INSERIR USUÁRIO</string>
+    <string name="password">INSERIR SENHA</string>
  ```
 * executar o emulador na IDE (Android Studio) - recomenda-se usar a API 30 e o Pixel 2
 * no emulador, permitir que o app tenha acesso aos storage (settings -> Fiap Cloud -> Permissions -> Storage)
