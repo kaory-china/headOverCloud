@@ -41,8 +41,6 @@ import kotlin.collections.ArrayList
 
 class Upload : AppCompatActivity() {
 
-    val service: RetrofitService = RetrofitFactory(this).retrofitService()
-
     val newRepo = PulpFileRepository(
         "test",
         null,
@@ -105,6 +103,7 @@ class Upload : AppCompatActivity() {
 
     // upload file to Pulp
     private fun uploadFile(fileName: String, uri: Uri) {
+        val service: RetrofitService = RetrofitFactory(this).retrofitService()
         // [TODO]: This should be captured by the upload file button
         //val uploadFileTest = File(path, fileName)
 
