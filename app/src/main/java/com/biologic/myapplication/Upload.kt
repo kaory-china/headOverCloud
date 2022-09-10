@@ -1,73 +1,37 @@
 package com.biologic.myapplication
 
 import android.app.Activity
-import android.content.ContentResolver
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.DocumentsContract
-import android.util.Log
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toFile
 import androidx.documentfile.provider.DocumentFile
 import com.biologic.myapplication.domain.*
 import com.example.myfirstapp.CreateDistribution
 import com.example.myfirstapp.CreatePublication
-import com.example.myfirstapp.PulpResponse
-import kotlinx.coroutines.*
-import okhttp3.MediaType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
-import java.io.InputStream
-import java.lang.Thread.*
+import java.lang.Thread.sleep
 import java.net.URI
 import java.security.MessageDigest
-import java.util.*
-import java.util.Objects.isNull
-import kotlin.collections.ArrayList
 
 class Upload : AppCompatActivity() {
 
-    val newRepo = PulpFileRepository(
-        "test",
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-    )
     val requestCode = 111
     var uri: Uri? = null
-    var path: String? = null
     var file: File? = null
-    var type: String? = null
     var fileName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_upload)
-
-        var path: TextView = findViewById(R.id.path)
-
 
         val browse: Button = findViewById(R.id.browse)
         browse.setOnClickListener(View.OnClickListener {
@@ -90,22 +54,15 @@ class Upload : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == requestCode && resultCode == Activity.RESULT_OK) {
-            val directoryUri = data?.data ?: return
             uri = data?.data
             println("URI = " + uri)
-            type = data.type
-            println("type = " + type)
-
-            fileName = DocumentFile.fromSingleUri(this,data!!.data!!)!!.name
-            //file = directoryUri.toFile()
+            fileName = DocumentFile.fromSingleUri(this, data!!.data!!)!!.name
         }
     }
 
     // upload file to Pulp
     private fun uploadFile(fileName: String, uri: Uri) {
         val service: RetrofitService = RetrofitFactory(this).retrofitService()
-        // [TODO]: This should be captured by the upload file button
-        //val uploadFileTest = File(path, fileName)
 
         val uploadFileTest = File("/storage/emulated/0/Download/", fileName)
         val testeFile = Uri.fromFile(uploadFileTest).toFile()
@@ -128,9 +85,9 @@ class Upload : AppCompatActivity() {
 
         var job = CoroutineScope(Dispatchers.IO).launch {
 
-            println("ContentPart = : " + contentPart)
-            println("fileName: " + fileName)
-            println("path: " + path)
+            val REPO_NAME = getResources().getString(R.string.repository_name)
+            val DISTRO_BASE_PATH = getResources().getString(R.string.distribution_base_path)
+            val DISTRO_NAME = getResources().getString(R.string.distribution_name)
 
             val artifact = service.getArtifact(sha256File).body()!!
             if (artifact.count == 0) {
@@ -143,19 +100,28 @@ class Upload : AppCompatActivity() {
                 println("Response body from createContent: " + createContentResponse.body())
             }
 
-
-            // [TODO] this should run only a single time for the
-            //        entire app life!
             // create a new pulp repo
-
-
-            var reposResponse = service.getRepos("test").body()!!.results
+            var reposResponse = service.getRepos(REPO_NAME).body()!!.results
             println("Response from getRepos: " + reposResponse)
             if (reposResponse!!.isEmpty()) {
+                val newRepo = PulpFileRepository(
+                    REPO_NAME,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
                 reposResponse.add(service.createFileRepository(newRepo).body()!!)
                 println("Response body from createFileRepository: " + reposResponse)
             }
-            reposResponse = service.getRepos("test").body()!!.results
+            reposResponse = service.getRepos(REPO_NAME).body()!!.results
             var uri = URI(reposResponse!![0].latest_version_href)
             var latestVersion = "versions/" + uri.path.substring(uri.path.lastIndexOf('/') - 1)
             println("LATEST VERSION = $latestVersion")
@@ -173,8 +139,6 @@ class Upload : AppCompatActivity() {
             }
             println("Response body from getFileContent: " + fileContentList)
 
-            // [TODO] in a re-execution the repository will not be recreated,
-            //        so pulpFileRepository var will be null ... we need to handle this scenario
             // adding file content into a repository
             val modifyContent = ModifyContent(
                 arrayListOf(fileContentList.results!![0].pulp_href!!),
@@ -185,14 +149,22 @@ class Upload : AppCompatActivity() {
                 service.addContentToRepo(reposResponse!![0].pulp_href!!, modifyContent)
             println("Response from addContentToRepo: " + task)
 
+            // wait until the task to add content to repo finishes
+            for (i in 1..10) {
+                val taskStatus = service.getTask(task.body()!!.task!!)
+                println("taskStatus: " + taskStatus)
+                println("taskStatusBody: " + taskStatus.body())
+                println("taskStatusBody: " + task.body())
+                if (taskStatus.body()!!.state == "completed") {
+                    break
+                }
+                sleep(1000)
+            }
 
-            sleep(10000)
             println("PULP REPO FOUND: " + reposResponse!![0].pulp_href + latestVersion)
-            // [TODO] in a re-execution the repository will not be recreated,
-            //        so pulpFileRepository var will be null ... we need to handle this scenario
-            // creating publication to a repository
 
-            reposResponse = service.getRepos("test").body()!!.results
+            // creating publication to a repository
+            reposResponse = service.getRepos(REPO_NAME).body()!!.results
             uri = URI(reposResponse!![0].latest_version_href)
             latestVersion = "versions/" + uri.path.substring(uri.path.lastIndexOf('/') - 1)
             println("LATEST VERSION = $latestVersion")
@@ -221,14 +193,14 @@ class Upload : AppCompatActivity() {
                 sleep(1000)
             }
 
-            val distributionList = service.getDistribution("new_dist").body()!!
+            val distributionList = service.getDistribution(DISTRO_NAME).body()!!
             if (distributionList.count == 0) {
                 // create a new distribution with the publication found
                 var distributionCreateResponse = CreateDistribution(
-                    "fiap",
+                    DISTRO_BASE_PATH,
                     null,
                     null,
-                    "new_dist",
+                    DISTRO_NAME,
                     null,
                     publication.pulp_href,
                 )
@@ -236,7 +208,7 @@ class Upload : AppCompatActivity() {
                 println("Response from createDistribution: " + task)
             } else {
                 var updateDistribution =
-                    UpdateDistribution("fiap", null, "new_dist", publication.pulp_href!!)
+                    UpdateDistribution(DISTRO_BASE_PATH, null, DISTRO_NAME, publication.pulp_href!!)
                 task = service.updateDistribution(
                     distributionList.results!![0].pulp_href,
                     updateDistribution
@@ -246,7 +218,8 @@ class Upload : AppCompatActivity() {
 
         }
         runBlocking {
-            job.join() }
+            job.join()
+        }
 
     }
 }

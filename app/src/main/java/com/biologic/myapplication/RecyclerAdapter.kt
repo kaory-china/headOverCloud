@@ -3,7 +3,6 @@ package com.biologic.myapplication
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.biologic.myapplication.domain.PulpContent
@@ -33,11 +32,9 @@ class RecyclerAdapter(private val contentList: ArrayList<PulpContent>) :
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val fileName: TextView
-        val button: Button
 
         init {
             fileName = itemView.findViewById(R.id.file_name)
-            button = itemView.findViewById(R.id.delete_button)
         }
     }
 

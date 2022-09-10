@@ -3,4 +3,7 @@
     <string name="ip_address">http://172.26.164.174:8080</string>
     <string name="user">admin</string>
     <string name="password">password</string>
+    <string name="repository_name">test</string>
+    <string name="distribution_base_path">fiap</string>
+    <string name="distribution_name">new_dist</string>
 </resources>

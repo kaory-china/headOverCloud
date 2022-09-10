@@ -67,7 +67,7 @@ interface RetrofitService {
     suspend fun addContentToRepo(
         @Path("pulp_href_repository", encoded = true) repo: String,
         @Body modifyContent: ModifyContent
-    ): Response<Object>
+    ): Response<TaskId>
 
     // Get repo versions
     @FormUrlEncoded
@@ -87,7 +87,7 @@ interface RetrofitService {
     @POST("/pulp/api/v3/publications/file/file/")
     suspend fun createPublication(
         @Body createPublication: CreatePublication
-    ): Response<Object>
+    ): Response<TaskId>
 
     // Get the list of publications
     @GET("/pulp/api/v3/publications/file/file/")
@@ -98,7 +98,7 @@ interface RetrofitService {
     @POST("/pulp/api/v3/distributions/file/file/")
     suspend fun createDistribution(
         @Body createDistribution: CreateDistribution
-    ): Response<Object>
+    ): Response<TaskId>
 
     @GET("/pulp/api/v3/distributions/file/file/")
     suspend fun getDistribution(@Query("name") name: String? = null): Response<DistributionList>
@@ -108,7 +108,13 @@ interface RetrofitService {
     @PATCH("{pulp_href_distribution}")
     suspend fun updateDistribution(@Path("pulp_href_distribution", encoded = true) distribution: String,
         @Body updateDistribution: UpdateDistribution
-    ): Response<Object>
+    ): Response<TaskId>
+
+    @Headers("Content-Type: application/json")
+    @GET("{task_href}")
+    suspend fun getTask(
+        @Path("task_href", encoded = true) task: String,
+    ): Response<Task>
 
 
 }
